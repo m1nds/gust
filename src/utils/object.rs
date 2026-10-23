@@ -118,9 +118,35 @@ impl Object {
             "blob" => Ok(Object::Blob(BlobObj {
                 data: data.to_vec(),
             })),
-            "tree" => Ok(Object::Tree(TreeObj {
-                entries: Vec::new(),
-            })),
+            "tree" => {
+                let mut entries = Vec::new();
+                let mut idx = 0;
+                while idx < data.len() {
+                    let space_pos = idx + data[idx..].iter().position(|&b| b == b' ').unwrap();
+                    let null_pos = space_pos + 1 + data[space_pos + 1..].iter().position(|&b| b == b'\x00').unwrap();
+
+                    let mode_bytes = &data[idx..space_pos];
+                    let path_bytes = &data[space_pos + 1..null_pos];
+                    let hash_bytes = &data[null_pos + 1..null_pos + 1 + HASH_SIZE];
+                    
+                    let mode = std::str::from_utf8(mode_bytes).unwrap().to_string();
+                    let name = std::str::from_utf8(path_bytes).unwrap().to_string();
+                    
+                    let mut hash = [0u8; HASH_SIZE];
+                    hash.copy_from_slice(hash_bytes);
+
+                    entries.push(TreeEntry {
+                        mode,
+                        name,
+                        hash,
+                    });
+
+                    idx = null_pos + 1 + HASH_SIZE;
+                }
+
+                return Ok(Object::Tree(TreeObj {
+                    entries: entries,
+                }))},
             "commit" => {
                 let content = std::str::from_utf8(data).map_err(|e| {
                     Error::new(
