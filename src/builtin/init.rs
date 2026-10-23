@@ -1,26 +1,33 @@
 use std::fs;
+use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 use std::path::Path;
-use std::fs::File;
 
-const GUST_DIR : &str = ".git";
+pub const GUST_DIR: &str = ".git";
 
 pub fn init_cmd(args: &[String]) {
-    let def_path = String::new();
-    let path = Path::new(args.get(0).unwrap_or(&def_path));
-    return match init(path) {
+    let mut def_path = String::new();
+    def_path.push_str(".");
+
+    let out = match args.len() {
+        0 => init(Path::new(&def_path)),
+        1 => init(Path::new(args.get(0).unwrap_or(&def_path))),
+        _ => panic!("Failed to initialize Gust repository: invalid args!"),
+    };
+
+    return match out {
         Ok(r) => r,
-        Err(error) => panic!("Failed to initialize Gust repository: {error:?}")
-    }
+        Err(error) => panic!("Failed to initialize Gust repository: {error:?}"),
+    };
 }
 
 pub fn init(path: &Path) -> io::Result<()> {
     if !path.exists() {
         let path_result = fs::create_dir(path);
-        match path_result{
+        match path_result {
             Ok(r) => r,
-            Err(error) => return Err(error)
+            Err(error) => return Err(error),
         }
     }
 
@@ -32,8 +39,8 @@ pub fn init(path: &Path) -> io::Result<()> {
 
     let gust_result = fs::create_dir(&s);
     match gust_result {
-            Ok(r) => r,
-            Err(error) => return Err(error)
+        Ok(r) => r,
+        Err(error) => return Err(error),
     }
 
     for dir in ["objects", "refs", "refs/heads", "refs/remotes"] {
@@ -41,7 +48,7 @@ pub fn init(path: &Path) -> io::Result<()> {
         let dir_result = fs::create_dir(&dir_path);
         match dir_result {
             Ok(r) => r,
-            Err(error) => return Err(error)
+            Err(error) => return Err(error),
         }
     }
 

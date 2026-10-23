@@ -4,3 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+sha2 = "0.11.1"
+zlib-rs = "0.6.8"
