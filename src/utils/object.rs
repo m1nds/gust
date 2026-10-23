@@ -14,7 +14,7 @@ use zlib_rs::{
     compress_bound, compress_slice, decompress_slice, DeflateConfig, InflateConfig, ReturnCode,
 };
 
-const HASH_SIZE: usize = 32;
+pub const HASH_SIZE: usize = 32;
 
 #[derive(Debug, Clone)]
 pub enum Object {
@@ -218,7 +218,7 @@ impl Object {
             Object::Commit(_) => "commit",
         };
 
-        let header = format!("{} {}\0", obj_type, data_len);
+        let header = format!("{} {}\x00", obj_type, data_len);
 
         let mut complete = Vec::new();
         complete.extend_from_slice(header.as_bytes());

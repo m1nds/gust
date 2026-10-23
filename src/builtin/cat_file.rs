@@ -37,7 +37,26 @@ pub fn cat_file(hash: &String) -> io::Result<()> {
 
     match obj {
         Object::Blob(blob) => println!("{}", String::from_utf8_lossy(&blob.data)),
-        _ => (),
+        Object::Tree(tree) => {
+            for entry in &tree.entries {
+                let obj_type = match entry.mode.as_str() {
+                    "40000" => "tree",
+                    _ => "blob",
+                };
+                let hash: String = entry.hash.iter().map(|b| format!("{:02x}", b)).collect();
+                println!("{:0>6} {} {}\t{}", entry.mode, obj_type, hash, entry.name);
+            }
+        }
+        Object::Commit(commit) => {
+            println!("tree {}", commit.tree);
+            for parent in &commit.parents {
+                println!("parent {}", parent);
+            }
+            println!("author {}", commit.author);
+            println!("committer {}", commit.committer);
+            println!();
+            print!("{}", commit.message);
+        }
     };
 
     return Ok(());
